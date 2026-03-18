@@ -1,7 +1,4 @@
 FROM chatwoot/chatwoot:v4.11.0
 
-# Borrar public existente
-RUN rm -rf /app/public
-
-# Copiar tu carpeta public
+# Copiar solo assets custom sin romper vite
 COPY public /app/public
