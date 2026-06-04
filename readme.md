@@ -49,8 +49,8 @@ La app queda disponible en `http://localhost:3000`.
 Cambiar el nombre de la instalación a **BIT Chat**:
 
 ```bash
-# 1. Entrar al bash del contenedor
-docker compose exec web bash
+# 1. Entrar al shell del contenedor
+docker compose exec web sh
 
 # 2. Dentro del contenedor, abrir la consola de Rails
 bundle exec rails c
