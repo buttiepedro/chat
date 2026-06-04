@@ -19,12 +19,27 @@ Editar `.env` y completar los valores obligatorios:
 |---|---|
 | `SECRET_KEY_BASE` | Generá con `openssl rand -hex 64` |
 | `FRONTEND_URL` | URL pública de la app (ej: `https://chat.tudominio.com`) |
-| `POSTGRES_HOST` | IP o hostname del servidor Postgres |
-| `POSTGRES_DATABASE` | Nombre de la base de datos |
-| `POSTGRES_USERNAME` | Usuario de Postgres |
-| `POSTGRES_PASSWORD` | Password de Postgres |
-| `POSTGRES_SCHEMA` | Schema de Postgres (default: `public`) |
 | `REDIS_URL` | URL de Redis (ej: `redis://ip:6379`) |
+
+**Conexión a Postgres — elegir una opción:**
+
+**Opción A** — Connection string (Neon, Supabase, Railway, etc.):
+```
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+```
+
+**Opción B** — Parámetros individuales (Postgres propio o Docker):
+```
+POSTGRES_HOST=
+POSTGRES_DATABASE=
+POSTGRES_USERNAME=
+POSTGRES_PASSWORD=
+```
+
+Opcionalmente, para usar un schema distinto a `public`:
+```
+POSTGRES_SCHEMA=bitchat
+```
 
 #### 3. Levantar
 
