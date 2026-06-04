@@ -84,5 +84,17 @@ if [ "$FRESH_DB" = true ] || [ "$IC_COUNT" = "0" ]; then
   echo "Seeds complete."
 fi
 
-echo "Database setup complete. Starting server..."
+echo "Database setup complete."
+
+# Pre-cargar librerías que se cargan lazy para evitar timeout en el primer request
+echo "Pre-warming lazy-loaded libraries..."
+bundle exec ruby -e "
+  require 'active_support'
+  require 'active_support/message_pack'
+  require 'active_support/message_pack/serializer'
+  require 'active_support/message_pack/extensions'
+  require 'active_support/messages/serializer_with_fallback'
+" 2>/dev/null || true
+echo "Ready. Starting server..."
+
 exec "$@"
