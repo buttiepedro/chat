@@ -1,25 +1,73 @@
-## COMANDOS
+## Deploy
 
-# Clonar el repo
+#### 1. Clonar el repo y entrar al directorio
+
+```bash
 git clone https://github.com/buttiepedro/chat.git
-
-# Entrar al proyecto
 cd chat
+```
 
-# Buildar la imagen usando el Dockerfile de la raiz
-sudo docker build -t chat-app .
+#### 2. Crear el archivo de entorno
 
-# Levantar el contenedor y dejarlo persistente
-sudo docker run -d \
-  --restart unless-stopped \
-  --name chat-app \
-  -p 3000:3000 \
-  chat-app
+```bash
+cp .env.example .env
+```
 
+Editar `.env` y completar los valores obligatorios:
 
-# LUEGO DE INSTALAR
-#### INSTALLATION_NAME = Bit Chat
+| Variable | Descripción |
+|---|---|
+| `SECRET_KEY_BASE` | Generá con `openssl rand -hex 64` |
+| `FRONTEND_URL` | URL pública de la app (ej: `https://chat.tudominio.com`) |
+| `POSTGRES_HOST` | IP o hostname del servidor Postgres |
+| `POSTGRES_DATABASE` | Nombre de la base de datos |
+| `POSTGRES_USERNAME` | Usuario de Postgres |
+| `POSTGRES_PASSWORD` | Password de Postgres |
+| `REDIS_URL` | URL de Redis (ej: `redis://ip:6379`) |
 
-- docker exec -it TU_CONTAINER sh
-- bundle exec rails c
-- InstallationConfig.find_by(name: 'INSTALLATION_NAME').update(value: 'BIT Chat')
+#### 3. Levantar
+
+```bash
+docker compose up -d --build
+```
+
+La primera vez el contenedor prepara la base de datos automáticamente antes de arrancar.
+
+#### 4. Verificar que está corriendo
+
+```bash
+docker compose ps
+docker compose logs -f web
+```
+
+La app queda disponible en `http://localhost:3000`.
+
+---
+
+## Post-instalación
+
+Cambiar el nombre de la instalación a **BIT Chat**:
+
+```bash
+docker compose exec web bundle exec rails c
+InstallationConfig.find_by(name: 'INSTALLATION_NAME').update(value: 'BIT Chat')
+exit
+```
+
+---
+
+## Comandos útiles
+
+```bash
+# Ver logs en tiempo real
+docker compose logs -f
+
+# Reiniciar servicios
+docker compose restart
+
+# Parar todo
+docker compose down
+
+# Rebuildar y reiniciar
+docker compose up -d --build
+```
