@@ -4,6 +4,8 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   reaping_frequency: <%= ENV.fetch("RAILS_DB_POOL_TIMEOUT") { 10 } %>
   schema_search_path: <%= ENV.fetch('POSTGRES_SCHEMA', 'public') %>
+  # PgBouncer (Neon, Supabase, etc.) requiere deshabilitar prepared statements
+  prepared_statements: <%= ENV['DATABASE_URL'] ? false : true %>
 
 development:
   <<: *default

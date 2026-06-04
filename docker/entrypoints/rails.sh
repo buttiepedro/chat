@@ -1,17 +1,14 @@
 #!/bin/sh
-set -e
 
 rm -rf /app/tmp/pids/server.pid
 rm -rf '/app/tmp/cache/*'
 
 # Configurar conexión según si se usa DATABASE_URL o variables individuales
 if [ -n "$DATABASE_URL" ]; then
-  # Extraer host y puerto de la URL para pg_isready
   DB_HOST=$(ruby -r uri -e "print URI('$DATABASE_URL').host" 2>/dev/null || echo "localhost")
   DB_PORT=$(ruby -r uri -e "print URI('$DATABASE_URL').port || 5432" 2>/dev/null || echo "5432")
   DB_USER=$(ruby -r uri -e "print URI('$DATABASE_URL').user" 2>/dev/null || echo "")
   PSQL="psql $DATABASE_URL"
-  # Con DBaaS (Neon, etc.) la DB ya existe, no hay que crearla
   EXTERNAL_DB=true
 else
   DB_HOST=$POSTGRES_HOST
@@ -37,42 +34,48 @@ if [ "$SCHEMA" != "public" ]; then
   $PSQL -c "CREATE SCHEMA IF NOT EXISTS \"$SCHEMA\";" 2>/dev/null || true
 fi
 
-# Detectar si es una instalación nueva (sin migraciones)
-if [ "$EXTERNAL_DB" = true ]; then
-  MIGRATIONS_COUNT=$($PSQL -tAc "SELECT COUNT(*) FROM schema_migrations" 2>/dev/null || echo "0")
-else
+# Detectar si es una instalación nueva (sin migraciones aplicadas)
+if [ "$EXTERNAL_DB" = false ]; then
   DB_EXISTS=$($PSQL -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$POSTGRES_DATABASE'" 2>/dev/null || echo "")
   if [ -z "$DB_EXISTS" ]; then
-    bundle exec rails db:create
+    echo "Database does not exist. Creating..."
+    bundle exec rails db:create || { echo "ERROR: db:create failed. Aborting."; exit 1; }
   fi
-  MIGRATIONS_COUNT=$($PSQL -d "$POSTGRES_DATABASE" -tAc "SELECT COUNT(*) FROM schema_migrations" 2>/dev/null || echo "0")
 fi
 
+MIGRATIONS_COUNT=$($PSQL -tAc "SELECT COUNT(*) FROM schema_migrations" 2>/dev/null | tr -d '[:space:]' || echo "0")
 FRESH_DB=false
 if [ "$MIGRATIONS_COUNT" = "0" ]; then
   FRESH_DB=true
   echo "Fresh database detected."
 else
-  echo "Existing database. Running pending migrations only."
+  echo "Existing database ($MIGRATIONS_COUNT migrations applied). Running pending migrations only."
 fi
 
 # Correr migraciones
 echo "Running migrations..."
-bundle exec rails db:migrate 2>&1 | tee /tmp/migrate_output.txt || true
+bundle exec rails db:migrate 2>&1 | tee /tmp/migrate_output.txt
+MIGRATE_EXIT=$?
 
 # Workaround para bug de acts-as-taggable-on con Ruby 3.4
 if grep -q "ActsAsTaggableOn::Taggable::Cache" /tmp/migrate_output.txt; then
   echo "Applying workaround for migration 20231211010807..."
   $PSQL -c "ALTER TABLE conversations ADD COLUMN IF NOT EXISTS cached_label_list varchar;" 2>/dev/null || true
   $PSQL -c "INSERT INTO schema_migrations (version) VALUES ('20231211010807') ON CONFLICT DO NOTHING;" 2>/dev/null || true
-  bundle exec rails db:migrate
+  bundle exec rails db:migrate 2>&1 | tee /tmp/migrate_output.txt
+  MIGRATE_EXIT=$?
+fi
+
+if [ $MIGRATE_EXIT -ne 0 ]; then
+  echo "ERROR: Migrations failed. Check logs above. Aborting startup."
+  exit 1
 fi
 
 # Seeds: en DB nueva O si installation_configs está vacío
-IC_COUNT=$($PSQL -tAc "SELECT COUNT(*) FROM installation_configs" 2>/dev/null || echo "0")
+IC_COUNT=$($PSQL -tAc "SELECT COUNT(*) FROM installation_configs" 2>/dev/null | tr -d '[:space:]' || echo "0")
 if [ "$FRESH_DB" = true ] || [ "$IC_COUNT" = "0" ]; then
   echo "Running seeds..."
-  bundle exec rails db:seed
+  bundle exec rails db:seed || { echo "ERROR: Seeds failed. Aborting."; exit 1; }
   echo "Seeds complete."
 fi
 
