@@ -23,6 +23,7 @@ Editar `.env` y completar los valores obligatorios:
 | `POSTGRES_DATABASE` | Nombre de la base de datos |
 | `POSTGRES_USERNAME` | Usuario de Postgres |
 | `POSTGRES_PASSWORD` | Password de Postgres |
+| `POSTGRES_SCHEMA` | Schema de Postgres (default: `public`) |
 | `REDIS_URL` | URL de Redis (ej: `redis://ip:6379`) |
 
 #### 3. Levantar

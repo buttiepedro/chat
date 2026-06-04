@@ -23,6 +23,13 @@ if [ -z "$DB_EXISTS" ]; then
   echo "Database does not exist. Creating..."
   bundle exec rails db:create
   FRESH_DB=true
+  # Crear el schema si se especificó uno distinto a public
+  SCHEMA=${POSTGRES_SCHEMA:-public}
+  if [ "$SCHEMA" != "public" ]; then
+    echo "Creating schema '$SCHEMA'..."
+    PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USERNAME -d $POSTGRES_DATABASE \
+      -c "CREATE SCHEMA IF NOT EXISTS $SCHEMA;" 2>/dev/null || true
+  fi
 else
   echo "Database exists. Checking migrations..."
 fi
