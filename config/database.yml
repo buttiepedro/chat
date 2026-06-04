@@ -3,8 +3,8 @@ default: &default
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   reaping_frequency: <%= ENV.fetch("RAILS_DB_POOL_TIMEOUT") { 10 } %>
-  # PgBouncer (Neon, Supabase, etc.) requiere deshabilitar prepared statements
-  prepared_statements: <%= ENV['DATABASE_URL'] ? false : true %>
+  # PgBouncer (pooler) requiere deshabilitar prepared statements; conexión directa no
+  prepared_statements: <%= ENV.fetch('DATABASE_URL', '').include?('pooler') ? false : true %>
   # schema_search_path solo para conexiones directas; con DATABASE_URL se setea
   # a nivel de base de datos via ALTER DATABASE en el entrypoint
   <% unless ENV['DATABASE_URL'] %>
