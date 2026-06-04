@@ -18,6 +18,9 @@ Editar `.env` y completar los valores obligatorios:
 | Variable | Descripción |
 |---|---|
 | `SECRET_KEY_BASE` | Generá con `openssl rand -hex 64` |
+| `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` | Generá con `bundle exec rails db:encryption:init` |
+| `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY` | Idem |
+| `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Idem |
 | `FRONTEND_URL` | URL pública de la app (ej: `https://chat.tudominio.com`) |
 | `REDIS_URL` | URL de Redis (ej: `redis://ip:6379`) |
 
