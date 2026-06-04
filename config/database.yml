@@ -3,10 +3,13 @@ default: &default
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   reaping_frequency: <%= ENV.fetch("RAILS_DB_POOL_TIMEOUT") { 10 } %>
-  # Incluye public como fallback para extensiones (pgvector, etc.)
-  schema_search_path: "<%= ENV.fetch('POSTGRES_SCHEMA', 'public') %>, public"
   # PgBouncer (Neon, Supabase, etc.) requiere deshabilitar prepared statements
   prepared_statements: <%= ENV['DATABASE_URL'] ? false : true %>
+  # schema_search_path solo para conexiones directas; con DATABASE_URL se setea
+  # a nivel de base de datos via ALTER DATABASE en el entrypoint
+  <% unless ENV['DATABASE_URL'] %>
+  schema_search_path: "<%= ENV.fetch('POSTGRES_SCHEMA', 'public') %>, public"
+  <% end %>
 
 development:
   <<: *default

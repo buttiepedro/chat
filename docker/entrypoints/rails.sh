@@ -32,6 +32,11 @@ SCHEMA=${POSTGRES_SCHEMA:-public}
 if [ "$SCHEMA" != "public" ]; then
   echo "Creating schema '$SCHEMA' if not exists..."
   $PSQL -c "CREATE SCHEMA IF NOT EXISTS \"$SCHEMA\";" 2>/dev/null || true
+  # Setear search_path a nivel de DB para que funcione con PgBouncer
+  DB_NAME=$(ruby -r uri -e "print URI(ENV['DATABASE_URL'] || '').path.to_s.sub('/','').split('?')[0]" 2>/dev/null)
+  DB_NAME=${DB_NAME:-$POSTGRES_DATABASE}
+  echo "Setting database search_path to '$SCHEMA, public'..."
+  $PSQL -c "ALTER DATABASE \"$DB_NAME\" SET search_path TO \"$SCHEMA\", public;" 2>/dev/null || true
 fi
 
 # Detectar si es una instalación nueva (sin migraciones aplicadas)
